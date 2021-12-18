@@ -4,12 +4,12 @@ This is a replication of a paper about chunking in NLP. The main algorithm is th
 # References
 We build this repo ontop of:
 
-[HMM-Unsupervised-Machine-Learning] (https://github.com/lazyprogrammer/machine_learning_examples/blob/master/hmm_class/hmmd_scaled.py)
+[HMM-Unsupervised-Machine-Learning](https://github.com/lazyprogrammer/machine_learning_examples/blob/master/hmm_class/hmmd_scaled.py)
 
-[npchunker] (https://github.com/tpeng/npchunker)
+[npchunker](https://github.com/tpeng/npchunker)
 
-[seqlearn] (https://github.com/larsmans/seqlearn/tree/master/seqlearn)
+[seqlearn](https://github.com/larsmans/seqlearn/tree/master/seqlearn)
 
-[CompoundPCFG-Chunker] (https://github.com/Anup-Deshmukh/CompoundPCFG-Chunker)
+[CompoundPCFG-Chunker](https://github.com/Anup-Deshmukh/CompoundPCFG-Chunker)
 
-[Unsupervised-Chunking] (https://github.com/Anup-Deshmukh/Unsupervised-Chunking)
+[Unsupervised-Chunking](https://github.com/Anup-Deshmukh/Unsupervised-Chunking)
