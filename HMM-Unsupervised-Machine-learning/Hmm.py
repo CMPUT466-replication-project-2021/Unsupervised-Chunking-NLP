@@ -36,8 +36,8 @@ class HMM:
         self.A = random_normalized(self.M, self.M) # state transition matrix
         self.B = random_normalized(self.M, V) # output distribution
 
-        print("initial A:", self.A)
-        print("initial B:", self.B)
+        # print("initial A:", self.A)
+        # print("initial B:", self.B)
 
         costs = []
         for it in range(max_iter):
@@ -107,9 +107,9 @@ class HMM:
                         b_num[i,x[t]] += alphas[n][t,i] * betas[n][t,i]
             self.A = a_num / den1
             self.B = b_num / den2
-        print("A:", self.A)
-        print("B:", self.B)
-        print("pi:", self.pi)
+        # print("A:", self.A)
+        # print("B:", self.B)
+        # print("pi:", self.pi)
 
         # plt.plot(costs)
         # plt.show()
@@ -193,51 +193,53 @@ def run():
             sequence.append(words[0])
         x.append(sequence_syms[words[0]])
 
-    hmm = HMM(2)
-    hmm.fit(X)
-    L = hmm.log_likelihood_multi(X).sum()
-    print("LL with fitted params:", L)
+    num_states = [2, 3, 4]
+    for n_state in num_states:
+        hmm = HMM(n_state)
+        hmm.fit(X)
+        L = hmm.log_likelihood_multi(X).sum()
+        print("LL with fitted params:", L)
 
-    # try true values
-    # hmm.pi = np.array([0.5, 0.5])
-    # hmm.A = np.array([[0.1, 0.9], [0.8, 0.2]])
-    # hmm.B = np.array([[0.6, 0.4], [0.3, 0.7]])
-    # L = hmm.log_likelihood_multi(X).sum()
-    # print("LL with true params:", L)
+        # try true values
+        # hmm.pi = np.array([0.5, 0.5])
+        # hmm.A = np.array([[0.1, 0.9], [0.8, 0.2]])
+        # hmm.B = np.array([[0.6, 0.4], [0.3, 0.7]])
+        # L = hmm.log_likelihood_multi(X).sum()
+        # print("LL with true params:", L)
 
-    # try viterbi
-    # print("Best state sequence for:", X[0])
-    
-    predicted = list()
-    target = list()
-    for i in range(len(X_t)):
-        predicted.extend(hmm.get_state_sequence(X_t[i]))
-        target.extend(T[i])
+        # try viterbi
+        # print("Best state sequence for:", X[0])
+        
+        predicted = list()
+        target = list()
+        for i in range(len(X_t)):
+            predicted.extend(hmm.get_state_sequence(X_t[i]))
+            target.extend(T[i])
 
-    print(len(target), len(predicted))
-    acc = 0
-    TP = 0
-    FN = 0
-    FP = 0
-    # Treat I as positive because it is the minority
-    for i in range(len(predicted)):
-        if predicted[i] == 0 and target[i] == 'B':
-            acc += 1
-        elif predicted[i] == 1 and target[i] == 'I':
-            acc += 1
-            TP += 1
-        elif target[i] == 'O':
-            # acc += 1
-            pass
-        elif predicted[i] == 0 and target[i] == 'I':
-            FN += 1
-        elif predicted[i] == 1 and target[i] == 'B':
-            FP += 1
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
-    print(precision, recall)
-    print("Tag accuracy:", acc / len(target) * 100, "%")
-    print("F1 score", 2*precision*recall / (precision+recall) * 100, "%")
+        print(len(target), len(predicted))
+        acc = 0
+        TP = 0
+        FN = 0
+        FP = 0
+        # Treat I as positive because it is the minority
+        for i in range(len(predicted)):
+            if predicted[i] == 0 and target[i] == 'B':
+                acc += 1
+            elif predicted[i] == 1 and target[i] == 'I':
+                acc += 1
+                TP += 1
+            elif target[i] == 'O':
+                # acc += 1
+                pass
+            elif predicted[i] == 0 and target[i] == 'I':
+                FN += 1
+            elif predicted[i] == 1 and target[i] == 'B':
+                FP += 1
+        precision = TP / (TP + FP)
+        recall = TP / (TP + FN)
+        print(precision, recall)
+        print("Tag accuracy:", acc / len(target) * 100, "%")
+        print("F1 score", 2*precision*recall / (precision+recall) * 100, "%")
 
 
 if __name__ == '__main__':
