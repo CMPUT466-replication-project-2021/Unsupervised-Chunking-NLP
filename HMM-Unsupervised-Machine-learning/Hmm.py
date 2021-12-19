@@ -151,8 +151,75 @@ class HMM:
             states[t] = psi[t+1, states[t+1]]
         return states
 
-def evaluate():
-    acc = 0
+
+def run():
+    X = []
+    x = []
+    X_val = []
+    x_val = []
+    T_val = []
+    t_val = []
+    sequence_syms = dict()
+    sequence = list()
+    X_t = []
+    x_t = []
+    T = []
+    t = []
+    for line in open('../test.txt'):
+        words = line.split()
+        if len(words) == 0:
+            X_t.append(x_t)
+            x_t  = []
+            T.append(t)
+            t = []
+            continue
+        if words[0] not in sequence_syms:
+            sequence_syms[words[0]] = len(sequence)
+            sequence.append(words[0])
+        x_t.append(sequence_syms[words[0]])
+        t.append(words[2][0])
+    
+    for line in open('../validation.txt'):
+        words = line.split()
+        if len(words) == 0:
+            X_val.append(x_val)
+            x_val  = []
+            T_val.append(t_val)
+            t_val = []
+            continue
+        if words[0] not in sequence_syms:
+            sequence_syms[words[0]] = len(sequence)
+            sequence.append(words[0])
+        x_val.append(sequence_syms[words[0]])
+        t_val.append(words[2][0])
+
+    for line in open('../train.txt'):
+        words = line.split()
+        if len(words) == 0:
+            X.append(x)
+            x  = []
+            continue
+        if words[0] not in sequence_syms:
+            sequence_syms[words[0]] = len(sequence)
+            sequence.append(words[0])
+        x.append(sequence_syms[words[0]])
+
+    num_states = [2, 3]
+    best_state_num = 0
+    best_fscore = 0
+    for n_state in num_states:
+        hmm = HMM(n_state)
+        hmm.fit(X)
+        L = hmm.log_likelihood_multi(X).sum()
+        print("LL with fitted params:", L)
+        
+        predicted = list()
+        target = list()
+        for i in range(len(X_val)):
+            predicted.extend(hmm.get_state_sequence(X_val[i]))
+            target.extend(T_val[i])
+
+        acc = 0
         TP = 0
         FN = 0
         FP = 0
@@ -172,95 +239,47 @@ def evaluate():
                 FP += 1
         precision = TP / (TP + FP)
         recall = TP / (TP + FN)
+        fscore = 2*precision*recall / (precision+recall)
         print(precision, recall)
         print("Tag accuracy:", acc / len(target) * 100, "%")
-        print("F1 score", 2*precision*recall / (precision+recall) * 100, "%")
-        return acc / len(target) * 100, 2*precision*recall / (precision+recall) * 100
-
-def run():
-    X = []
-    x = []
-    X_val = []
-    x_val = []
-    sequence_syms = dict()
-    sequence = list()
-    X_t = []
-    x_t = []
-    T = []
-    t = []
-    for line in open('../test.txt'):
-        # 1 for H, 0 for T
-        # x = [1 if e == 'H' else 0 for e in line.rstrip()]
-        # X.append(x)
-
-        words = line.split()
-        if len(words) == 0:
-            X_t.append(x_t)
-            x_t  = []
-            T.append(t)
-            t = []
-            continue
-        if words[0] not in sequence_syms:
-            sequence_syms[words[0]] = len(sequence)
-            sequence.append(words[0])
-        x_t.append(sequence_syms[words[0]])
-        t.append(words[2][0])
-    for line in open('../train.txt'):
-        # 1 for H, 0 for T
-        # x = [1 if e == 'H' else 0 for e in line.rstrip()]
-        # X.append(x)
-
-        words = line.split()
-        if len(words) == 0:
-            X.append(x)
-            x  = []
-            continue
-        if words[0] not in sequence_syms:
-            sequence_syms[words[0]] = len(sequence)
-            sequence.append(words[0])
-        x.append(sequence_syms[words[0]])
+        print("F1 score", fscore * 100, "%")
+        if fscore > best_fscore:
+            best_fscore = fscore
+            best_state_num = n_state
     
-    for line in open('../validation.txt'):
-        # 1 for H, 0 for T
-        # x = [1 if e == 'H' else 0 for e in line.rstrip()]
-        # X.append(x)
+    print("Best number of hidden state:", best_state_num)
+    hmm = HMM(best_state_num)
+    hmm.fit(X + X_val)
+    predicted = list()
+    target = list()
+    for i in range(len(X_t)):
+        predicted.extend(hmm.get_state_sequence(X_t[i]))
+        target.extend(T[i])
 
-        words = line.split()
-        if len(words) == 0:
-            X_val.append(x_val)
-            x_val  = []
-            continue
-        if words[0] not in sequence_syms:
-            sequence_syms[words[0]] = len(sequence)
-            sequence.append(words[0])
-        x_val.append(sequence_syms[words[0]])
-
-    num_states = [2, 3, 4]
-    for n_state in num_states:
-        hmm = HMM(n_state)
-        hmm.fit(X)
-        L = hmm.log_likelihood_multi(X).sum()
-        print("LL with fitted params:", L)
-
-        # try true values
-        # hmm.pi = np.array([0.5, 0.5])
-        # hmm.A = np.array([[0.1, 0.9], [0.8, 0.2]])
-        # hmm.B = np.array([[0.6, 0.4], [0.3, 0.7]])
-        # L = hmm.log_likelihood_multi(X).sum()
-        # print("LL with true params:", L)
-
-        # try viterbi
-        # print("Best state sequence for:", X[0])
-        
-        predicted = list()
-        target = list()
-        for i in range(len(X_t)):
-            predicted.extend(hmm.get_state_sequence(X_t[i]))
-            target.extend(T[i])
-
-        print(len(target), len(predicted))
-        
-
+    acc = 0
+    TP = 0
+    FN = 0
+    FP = 0
+    # Treat I as positive because it is the minority
+    for i in range(len(predicted)):
+        if predicted[i] == 0 and target[i] == 'B':
+            acc += 1
+        elif predicted[i] == 1 and target[i] == 'I':
+            acc += 1
+            TP += 1
+        elif target[i] == 'O':
+            # acc += 1
+            pass
+        elif predicted[i] == 0 and target[i] == 'I':
+            FN += 1
+        elif predicted[i] == 1 and target[i] == 'B':
+            FP += 1
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    fscore = 2*precision*recall / (precision+recall)
+    print(precision, recall)
+    print("Tag accuracy:", acc / len(target) * 100, "%")
+    print("F1 score", fscore * 100, "%")
 
 if __name__ == '__main__':
     run()
