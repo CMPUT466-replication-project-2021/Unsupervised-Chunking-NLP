@@ -67,7 +67,7 @@ def load_data():
     describe(X_test, lengths_test)
 
     print("Loading entire training data...", end=" ")
-    trainAndval = load_conll("train+val.txt", features)
+    trainAndval = load_conll("../../train+val.txt", features)
     X_trainAndval, _, lengths_trainAndval = trainAndval
     describe(X_trainAndval, lengths_trainAndval)
 
