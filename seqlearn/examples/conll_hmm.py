@@ -51,18 +51,18 @@ def load_data():
     print("Loading training data...", end=" ")
     # train_files = [f for i, f in enumerate(files) if i % 5 != 0]
     # train = load_conll(fileinput.input(train_files), features)
-    train = load_conll("train.txt", features)
+    train = load_conll("../../train.txt", features)
     X_train, _, lengths_train = train
     describe(X_train, lengths_train)
 
-    val = load_conll("validation.txt", features)
+    val = load_conll("../../validation.txt", features)
     X_val, _, lengths_val = val
     describe(X_val, lengths_val)
 
     print("Loading test data...", end=" ")
     # test_files = [f for i, f in enumerate(files) if i % 5 == 0]
     # test = load_conll(fileinput.input(test_files), features)
-    test = load_conll("test.txt", features)
+    test = load_conll("../../test.txt", features)
     X_test, _, lengths_test = test
     describe(X_test, lengths_test)
 

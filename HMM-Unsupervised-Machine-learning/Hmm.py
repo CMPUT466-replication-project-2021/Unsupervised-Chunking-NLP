@@ -151,17 +151,44 @@ class HMM:
             states[t] = psi[t+1, states[t+1]]
         return states
 
+def evaluate():
+    acc = 0
+        TP = 0
+        FN = 0
+        FP = 0
+        # Treat I as positive because it is the minority
+        for i in range(len(predicted)):
+            if predicted[i] == 0 and target[i] == 'B':
+                acc += 1
+            elif predicted[i] == 1 and target[i] == 'I':
+                acc += 1
+                TP += 1
+            elif target[i] == 'O':
+                # acc += 1
+                pass
+            elif predicted[i] == 0 and target[i] == 'I':
+                FN += 1
+            elif predicted[i] == 1 and target[i] == 'B':
+                FP += 1
+        precision = TP / (TP + FP)
+        recall = TP / (TP + FN)
+        print(precision, recall)
+        print("Tag accuracy:", acc / len(target) * 100, "%")
+        print("F1 score", 2*precision*recall / (precision+recall) * 100, "%")
+        return acc / len(target) * 100, 2*precision*recall / (precision+recall) * 100
 
 def run():
     X = []
     x = []
+    X_val = []
+    x_val = []
     sequence_syms = dict()
     sequence = list()
     X_t = []
     x_t = []
     T = []
     t = []
-    for line in open('test.txt'):
+    for line in open('../test.txt'):
         # 1 for H, 0 for T
         # x = [1 if e == 'H' else 0 for e in line.rstrip()]
         # X.append(x)
@@ -178,7 +205,7 @@ def run():
             sequence.append(words[0])
         x_t.append(sequence_syms[words[0]])
         t.append(words[2][0])
-    for line in open('train.txt'):
+    for line in open('../train.txt'):
         # 1 for H, 0 for T
         # x = [1 if e == 'H' else 0 for e in line.rstrip()]
         # X.append(x)
@@ -192,6 +219,21 @@ def run():
             sequence_syms[words[0]] = len(sequence)
             sequence.append(words[0])
         x.append(sequence_syms[words[0]])
+    
+    for line in open('../validation.txt'):
+        # 1 for H, 0 for T
+        # x = [1 if e == 'H' else 0 for e in line.rstrip()]
+        # X.append(x)
+
+        words = line.split()
+        if len(words) == 0:
+            X_val.append(x_val)
+            x_val  = []
+            continue
+        if words[0] not in sequence_syms:
+            sequence_syms[words[0]] = len(sequence)
+            sequence.append(words[0])
+        x_val.append(sequence_syms[words[0]])
 
     num_states = [2, 3, 4]
     for n_state in num_states:
@@ -217,29 +259,7 @@ def run():
             target.extend(T[i])
 
         print(len(target), len(predicted))
-        acc = 0
-        TP = 0
-        FN = 0
-        FP = 0
-        # Treat I as positive because it is the minority
-        for i in range(len(predicted)):
-            if predicted[i] == 0 and target[i] == 'B':
-                acc += 1
-            elif predicted[i] == 1 and target[i] == 'I':
-                acc += 1
-                TP += 1
-            elif target[i] == 'O':
-                # acc += 1
-                pass
-            elif predicted[i] == 0 and target[i] == 'I':
-                FN += 1
-            elif predicted[i] == 1 and target[i] == 'B':
-                FP += 1
-        precision = TP / (TP + FP)
-        recall = TP / (TP + FN)
-        print(precision, recall)
-        print("Tag accuracy:", acc / len(target) * 100, "%")
-        print("F1 score", 2*precision*recall / (precision+recall) * 100, "%")
+        
 
 
 if __name__ == '__main__':
