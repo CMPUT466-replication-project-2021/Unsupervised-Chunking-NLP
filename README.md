@@ -6,7 +6,7 @@ We build this repo ontop of:
 
 [HMM-Unsupervised-Machine-Learning](https://github.com/lazyprogrammer/machine_learning_examples/blob/master/hmm_class/hmmd_scaled.py)
 
-[npchunker](https://github.com/tpeng/npchunker)
+[npchunker](https://www.nltk.org/book_1ed/ch07.html)
 
 [seqlearn](https://github.com/larsmans/seqlearn/tree/master/seqlearn)
 
