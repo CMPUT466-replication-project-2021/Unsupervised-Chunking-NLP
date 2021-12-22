@@ -2,25 +2,32 @@
 from nltk.corpus import conll2000
 import nltk
 
-class UnigramChunker(nltk.ChunkParserI):
-    def __init__(self, train_sents):
-        train_data = [[(t,c) for w,t,c in nltk.chunk.tree2conlltags(sent)] for sent in train_sents]
-        self.tagger = nltk.UnigramTagger(train_data)
-
-    def parse(self, sentence):
-        pos_tags = [pos for (word, pos) in sentence]
-        tagged_pos_tags = self.tagger.tag(pos_tags)
-        chunktags = [chunktag for (pos, chunktag) in tagged_pos_tags]
-        conlltags = [(word, pos, chunktag) for ((word, pos), chunktag) in zip(sentence, chunktags)]
-        return nltk.chunk.util.conlltags2tree(conlltags)
-
 def npchunk_features(sentence, i, history):
     word, pos = sentence[i]
     if i == 0:
-       prevword, prevpos = "<START>", "<START>"
+        prevword, prevpos = "<START>", "<START>"
     else:
-       prevword, prevpos = sentence[i-1]
-    return {"pos": pos, "prevpos": prevpos}
+        prevword, prevpos = sentence[i-1]
+    if i == len(sentence)-1:
+        nextword, nextpos = "<END>", "<END>"
+    else:
+        nextword, nextpos = sentence[i+1]
+    return {"pos": pos,
+            "word": word,
+            "prevpos": prevpos,
+            "nextpos": nextpos,
+            "prevpos+pos": "%s+%s" % (prevpos, pos),
+            "pos+nextpos": "%s+%s" % (pos, nextpos),
+            "tags-since-dt": tags_since_dt(sentence, i)} 
+
+def tags_since_dt(sentence, i):
+    tags = set()
+    for word, pos in sentence[:i]:
+        if pos == 'DT':
+            tags = set()
+        else:
+            tags.add(pos)
+    return '+'.join(sorted(tags))
 
 class ConsecutiveNPChunkTagger(nltk.TaggerI):
 
