@@ -153,17 +153,17 @@ class HMM:
 
 def valid_conll_eval(fname):
 
-	with open(fname, 'r') as file:
-		data = file.read()
+    with open(fname, 'r') as file:
+        data = file.read()
 
-	pipe = run(["perl", "eval_conll2000_updated.pl"], stdout=PIPE, input=data, encoding='ascii')
-	output = pipe.stdout
+    pipe = run(["perl", "eval_conll2000_updated.pl"], stdout=PIPE, input=data, encoding='ascii')
+    output = pipe.stdout
 
-	tag_acc = float(output.split()[0])
-	phrase_f1 = float(output.split()[1])
+    tag_acc = float(output.split()[0])
+    phrase_f1 = float(output.split()[1])
 
-	print("tag_acc, phrase_f1", tag_acc, phrase_f1)
-	return phrase_f1
+    print("tag_acc, phrase_f1", tag_acc, phrase_f1)
+    return phrase_f1
 
 def evaluate(predicted, target):
     filename = "temp.txt"
@@ -234,7 +234,7 @@ def process_data():
         x.append(sequence_syms[words[0]])
     return X, X_val, T_val, X_t, T
 
-def run():
+def main():
     X, X_val, T_val, X_t, T = process_data()
 
     num_states = [2, 3, 4]
@@ -269,4 +269,4 @@ def run():
     evaluate(predicted, target)
 
 if __name__ == '__main__':
-    run()
+    main()
