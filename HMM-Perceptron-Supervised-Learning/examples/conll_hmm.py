@@ -14,7 +14,21 @@ from seqlearn.evaluation import bio_f_score
 from seqlearn.perceptron import StructuredPerceptron
 from seqlearn.hmm import MultinomialHMM
 from sklearn.metrics import accuracy_score
+from subprocess import run, PIPE
 
+def valid_conll_eval(fname):
+
+    with open(fname, 'r') as file:
+        data = file.read()
+
+    pipe = run(["perl", "eval_conll2000_updated.pl"], stdout=PIPE, input=data, encoding='ascii')
+    output = pipe.stdout
+
+    tag_acc = float(output.split()[0])
+    phrase_f1 = float(output.split()[1])
+
+    print("tag_acc, phrase_f1", tag_acc, phrase_f1)
+    return tag_acc, phrase_f1
 
 def features(sentence, i):
     """Features for i'th token in sentence.
@@ -51,23 +65,23 @@ def load_data():
     print("Loading training data...", end=" ")
     # train_files = [f for i, f in enumerate(files) if i % 5 != 0]
     # train = load_conll(fileinput.input(train_files), features)
-    train = load_conll("../../train.txt", features)
+    train = load_conll("train.txt", features)
     X_train, _, lengths_train = train
     describe(X_train, lengths_train)
 
-    val = load_conll("../../validation.txt", features)
+    val = load_conll("validation.txt", features)
     X_val, _, lengths_val = val
     describe(X_val, lengths_val)
 
     print("Loading test data...", end=" ")
     # test_files = [f for i, f in enumerate(files) if i % 5 == 0]
     # test = load_conll(fileinput.input(test_files), features)
-    test = load_conll("../../test.txt", features)
+    test = load_conll("test.txt", features)
     X_test, _, lengths_test = test
     describe(X_test, lengths_test)
 
     print("Loading entire training data...", end=" ")
-    trainAndval = load_conll("../../train+val.txt", features)
+    trainAndval = load_conll("train+val.txt", features)
     X_trainAndval, _, lengths_trainAndval = trainAndval
     describe(X_trainAndval, lengths_trainAndval)
 
@@ -75,7 +89,8 @@ def load_data():
 
 
 if __name__ == "__main__":
-    print(__doc__)
+    testfile = "out_hmm.txt"
+    valfile = "valFile.txt"
 
     #print("Loading training data...", end=" ")
     #X_train, y_train, lengths_train = load_conll(sys.argv[1], features)
@@ -93,6 +108,7 @@ if __name__ == "__main__":
     #X_test, y_test, lengths_test = load_conll(sys.argv[2], features)
     #describe(X_test, lengths_test)
 
+    best_val_f1 = 0
     best_val_accuracy = 0
     best_lr = 0
     best_decoder = None
@@ -104,12 +120,15 @@ if __name__ == "__main__":
             print("Training %s" % model)
             model.fit(X_train, y_train, lengths_train)
             y_pred = model.predict(X_val, lengths_val)
-            val_accuracy = accuracy_score(y_val, y_pred)
-            F = bio_f_score(y_val, y_pred)
-            print("Accuracy: %.3f" % (100 * val_accuracy))
-            print("CoNLL F1: %.3f" % (100 * F))
+            f = open(valfile, "w")
+            for i in range(len(y_pred)):
+                f.write("x y " + y_val[i][0] + " " + y_pred[i][0] + "\n")
+            val_accuracy, phrase_f1 = valid_conll_eval(valfile)
+            print("Accuracy: %.3f" % val_accuracy)
+            print("CoNLL F1: %.3f" % phrase_f1)
 
-            if val_accuracy > best_val_accuracy:
+            if phrase_f1 > best_val_f1:
+                best_val_f1 = phrase_f1
                 best_val_accuracy = val_accuracy
                 best_lr = lr
                 best_decoder = decoder
@@ -120,5 +139,11 @@ if __name__ == "__main__":
     model = MultinomialHMM(alpha=best_lr, decode=best_decoder)
     model.fit(X_train_val, y_train_val, lengths_train_val)
     y_pred = model.predict(X_test, lengths_test)
-    print("Accuracy: %.3f" % (100 * accuracy_score(y_test, y_pred)))
-    print("CoNLL F1: %.3f" % (100 * bio_f_score(y_test, y_pred)))
+    f = open(testfile, "w")
+    for i in range(len(y_pred)):
+        f.write("x y " + y_test[i][0] + " " + y_pred[i][0] + "\n")
+
+    f.close()
+    test_accuracy, test_f1 = valid_conll_eval(testfile)
+    print("Accuracy: %.3f" % test_accuracy)
+    print("CoNLL F1: %.3f" % test_f1)
