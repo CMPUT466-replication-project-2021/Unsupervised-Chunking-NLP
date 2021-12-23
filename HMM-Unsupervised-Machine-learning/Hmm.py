@@ -10,7 +10,7 @@ from builtins import range
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+from subprocess import run, PIPE
 
 def random_normalized(d1, d2):
     x = np.random.random((d1, d2))
@@ -151,50 +151,34 @@ class HMM:
             states[t] = psi[t+1, states[t+1]]
         return states
 
-def evaluate(predicted, target, num_states):
+def valid_conll_eval(fname):
 
-    TP = 0
-    TN = 0
-    FN = 0
-    FP = 0
+	with open(fname, 'r') as file:
+		data = file.read()
 
-    # Treat B as positive because it is the minority
-    # for i in range(len(predicted)):
-    #     if predicted[i] == 0 and target[i] == 'B':
-    #         TP += 1
-    #     elif predicted[i] == 1 and target[i] == 'I':
-    #         TN += 1
-    #     elif predicted[i] == 0 and target[i] == 'I':
-    #         FN += 1
-    #     elif predicted[i] == 1 and target[i] == 'B':
-    #         FP += 1
-        
-    #     if target[i] == 'O':
-    #         if num_states == 3 and predicted[i] == 2:
-    #                 TN += 1
+	pipe = run(["perl", "eval_conll2000_updated.pl"], stdout=PIPE, input=data, encoding='ascii')
+	output = pipe.stdout
 
-    # Treat I as positive
+	tag_acc = float(output.split()[0])
+	phrase_f1 = float(output.split()[1])
+
+	print("tag_acc, phrase_f1", tag_acc, phrase_f1)
+	return phrase_f1
+
+def evaluate(predicted, target):
+    filename = "temp.txt"
+    f = open(filename, "w")
     for i in range(len(predicted)):
-        if predicted[i] == 0 and target[i] == 'B':
-            TN += 1
-        elif predicted[i] == 1 and target[i] == 'I':
-            TP += 1
-        elif predicted[i] == 0 and target[i] == 'I':
-            FP += 1
-        elif predicted[i] == 1 and target[i] == 'B':
-            FN += 1
-        
-        if target[i] == 'O':
-            if num_states == 3 and predicted[i] == 2:
-                TN += 1
-
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
-    # fscore = 2*precision*recall / (precision+recall)
-    fscore = 2*TP / (2*TP + FN + FP)
-    acc = (TP + TN) / (TP + TN + FP + FN)
-    print("Tag accuracy:", acc * 100, "%")
-    print("F1 score", fscore * 100, "%")
+        if predicted[i] == 0:
+            f.write("x y " + target[i] + " B\n")
+        elif predicted[i] == 1:
+            f.write("x y " + target[i] + " I\n")
+        elif predicted[i] == 2:
+            f.write("x y " + target[i] + " O\n")
+        else:
+            f.write("x y " + target[i] + " N\n")
+    f.close()
+    fscore = valid_conll_eval(filename)
     return fscore
 
 def process_data():
@@ -253,7 +237,7 @@ def process_data():
 def run():
     X, X_val, T_val, X_t, T = process_data()
 
-    num_states = [2, 3]
+    num_states = [2, 3, 4]
     best_state_num = 0
     best_fscore = 0
     for n_state in num_states:
@@ -268,7 +252,7 @@ def run():
             predicted.extend(hmm.get_state_sequence(X_val[i]))
             target.extend(T_val[i])
 
-        fscore = evaluate(predicted, target, n_state)
+        fscore = evaluate(predicted, target)
         if fscore > best_fscore:
             best_fscore = fscore
             best_state_num = n_state
@@ -282,7 +266,7 @@ def run():
         predicted.extend(hmm.get_state_sequence(X_t[i]))
         target.extend(T[i])
 
-    evaluate(predicted, target, n_state)
+    evaluate(predicted, target)
 
 if __name__ == '__main__':
     run()

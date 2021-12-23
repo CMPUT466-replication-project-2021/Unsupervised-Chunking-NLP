@@ -1,28 +1,28 @@
-acc = 0
-target = []
-B_n = 0
-I_n = 0
+from subprocess import run, PIPE
 
-for line in open('../test.txt'):
-    words = line.split()
-    if len(words) == 0:
+def valid_conll_eval(fname):
+
+	with open(fname, 'r') as file:
+		data = file.read()
+
+	pipe = run(["perl", "eval_conll2000_updated.pl"], stdout=PIPE, input=data, encoding='ascii')
+	output = pipe.stdout
+
+	tag_acc = float(output.split()[0])
+	phrase_f1 = float(output.split()[1])
+
+	print("tag_acc, phrase_f1", tag_acc, phrase_f1)
+	return phrase_f1
+
+filename = "temp.txt"
+f = open(filename, "w")
+
+test = "../test.txt"
+ftest = open(test, "r")
+for line in ftest:
+    word = line.split()
+    if len(word) == 0:
         continue
-    target.append(words[2][0])
-
-# Since the majority is the label B, always guess B
-for i in range(len(target)):
-    if target[i] == 'B':
-        acc += 1
-        B_n += 1
-    elif target[i] == 'I':
-        I_n += 1
-
-print("Tag accuracy:", acc / (B_n + I_n) * 100, "%")
-
-# Since TN = B / total, FN = I / total, TP = 0, FP = 0
-# Apply L'Hopital's Rule
-precision = I_n / (B_n + I_n)
-recall = 0
-fscore = 2 * precision * recall / (precision + recall)
-
-print("F1 score:", fscore * 100, "%")
+    f.write("x y " + word[2][0] + " B\n")
+f.close()
+fscore = valid_conll_eval(filename)
